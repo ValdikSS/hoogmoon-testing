@@ -1,0 +1,20 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Enable v2ray LAN traffic redirection
+#
+# Option controlled from v2ray_redirect init script.
+#
+# service v2ray_redirect start — enables redirection
+# service v2ray_redirect stop — disables redirection
+
+uci set firewall.v2ray=include
+uci set firewall.v2ray.type='nftables'
+uci set firewall.v2ray.path='/etc/v2ray/v2ray-redirect-lan.nft'
+uci set firewall.v2ray.position='table-post'
+uci set firewall.v2ray.enabled='0'
+
+uci commit firewall
+
+exit 0

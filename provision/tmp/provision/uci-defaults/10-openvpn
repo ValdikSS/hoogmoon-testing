@@ -1,0 +1,60 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+cp -r /tmp/provision/openvpn/* /etc/openvpn/
+
+### INTERNAL OpenVPN configuration
+
+uci set openvpn.internal=openvpn
+uci set openvpn.internal.enabled=1
+uci set openvpn.internal.config=/etc/openvpn/internal.conf
+
+uci commit openvpn
+
+uci set network.tun_internal=interface
+uci set network.tun_internal.proto='none'
+uci set network.tun_internal.device='tun-internal'
+
+uci commit network
+
+# Find WAN zone
+for i in 0 1 2; do
+    if [ "$(uci -q get firewall.@zone[$i].name)" = "wan" ]; then
+        uci add_list firewall.@zone[$i].network='tun_internal'
+        break
+    fi
+done
+
+uci commit firewall
+
+
+
+### INSIDE OpenVPN configuration
+
+uci set openvpn.inside=openvpn
+uci set openvpn.inside.enabled=1
+uci set openvpn.inside.config=/etc/openvpn/inside.conf
+
+uci commit openvpn
+
+uci set network.tun_inside=interface
+uci set network.tun_inside.proto='none'
+uci set network.tun_inside.device='tun-inside'
+
+uci commit network
+
+uci set firewall.tun_inside=zone
+uci set firewall.tun_inside.name='tun_inside'
+uci set firewall.tun_inside.network='tun_inside'
+uci set firewall.tun_inside.input='ACCEPT'
+uci set firewall.tun_inside.output='ACCEPT'
+uci set firewall.tun_inside.forward='ACCEPT'
+uci set firewall.tun_inside_fw=forwarding
+uci set firewall.tun_inside_fw.src='tun_inside'
+uci set firewall.tun_inside_fw.dest='wan'
+
+uci commit firewall
+
+
+exit 0

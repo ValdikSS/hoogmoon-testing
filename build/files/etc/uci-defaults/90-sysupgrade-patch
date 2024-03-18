@@ -1,0 +1,10 @@
+# Sysupgrade script creates backup without including only files, without the
+# directories itself, which lead to missing/incorrect directories owner
+# and permissions, as well as excluding empty folder.
+#
+# See https://github.com/openwrt/openwrt/pull/11797
+#
+
+sed -i 's~-type f -o -type l \\) $filter~-type f -o -type l -o -type d \\) $filter~' /sbin/sysupgrade
+
+exit 0

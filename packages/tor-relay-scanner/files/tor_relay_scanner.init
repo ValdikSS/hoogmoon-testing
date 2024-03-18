@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=50
+STOP=50
+
+USE_PROCD=1
+
+start_instance() {
+  local section="$1"
+
+  config_get_bool enable "$section" enable
+  config_get cmdline "$section" cmdline
+  config_get_bool tor_reload "$section" tor_reload
+
+  [ "$enable" = "0" ] && return 1
+  [ -z "$cmdline" ] && return 1
+
+  procd_open_instance
+  procd_set_param command /usr/bin/tor-relay-scanner
+  [ "$tor_reload" = "1" ] && procd_append_param command tor_reload
+  procd_append_param command $cmdline
+  #procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-60} ${respawn_retry:-5}
+  procd_set_param stdout 1 # forward stdout of the command to logd
+  procd_set_param stderr 1 # same for stderr
+  procd_close_instance
+}
+
+start_service() {
+  config_load tor_relay_scanner
+  config_foreach start_instance tor_relay_scanner
+}

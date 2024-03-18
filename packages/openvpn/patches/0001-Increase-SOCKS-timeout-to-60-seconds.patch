@@ -1,0 +1,25 @@
+From d468af420287ef5c40890b487a2ab8c4528616f1 Mon Sep 17 00:00:00 2001
+From: ValdikSS <iam@valdikss.org.ru>
+Date: Thu, 2 Mar 2023 11:12:08 +0300
+Subject: [PATCH] Increase SOCKS timeout to 60 seconds
+
+---
+ src/openvpn/socks.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/openvpn/socks.c b/src/openvpn/socks.c
+index fe6dc91..cd12386 100644
+--- a/src/openvpn/socks.c
++++ b/src/openvpn/socks.c
+@@ -313,7 +313,7 @@ recv_socks_reply(socket_descriptor_t sd,
+     int alen = 0;
+     int len = 0;
+     char buf[270];		/* 4 + alen(max 256) + 2 */
+-    const int timeout_sec = 5;
++    const int timeout_sec = 60;
+ 
+     if (addr != NULL)
+     {
+-- 
+2.39.2
+

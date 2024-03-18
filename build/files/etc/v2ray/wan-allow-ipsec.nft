@@ -1,0 +1,5 @@
+# Convert 'WAN' IPsec traffic to LAN rules
+
+chain input_wan {
+    ipsec in ip saddr 192.168.0.0/16 counter accept
+}

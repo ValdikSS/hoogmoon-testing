@@ -1,0 +1,183 @@
+// V2ray configuration
+// This is a main entry point for the LAN users.
+//
+// LAN TCP connections are redirected to V2ray inbound,
+// and served according to the proxy rules.
+//
+// 1. If TCP port is one of the permitted by Psiphon, use balanced connection between Tor and Psiphon (which has less latency)
+// 2. If TCP port is not permitted by free Psiphon, use Tor
+// 3. DNS is also balanced
+//
+// Connectivity (and latency) check is performed every 3 mintutes.
+
+{
+  "log": {
+    // Log level, one of "debug", "info", "warning", "error", "none"
+    "loglevel": "warning"
+  },
+  // List of inbound proxy configurations.
+  "inbounds": [{
+    // Inbound port for LAN-redirected connections
+    "port": 5555,
+    "listen": "::",
+    "tag": "dokodemo-in",
+    "protocol": "dokodemo-door",
+    "settings": {
+      "network": "tcp",
+      "followRedirect": true
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": ["fakedns", "http", "tls"],
+      "metadataOnly": false
+    }
+  },{
+    // Inbound port for DNS-redirected connections (UDP/TCP)
+    "port": 5553,
+    "listen": "::",
+    "tag": "dns-in",
+    "protocol": "dokodemo-door",
+    "settings": {
+      // V2ray can't get original destination using conntrack only
+      // (for UDP, it is required to configure tproxy redirection to do that properly).
+      // That's why make all DNS requests look like it is a request to 8.8.8.8:53.
+      "network": "udp",
+      "address": "8.8.8.8",
+      "port": 53
+    }
+  }],
+  // List of outbound proxy configurations.
+  "outbounds": [{
+    // Tor
+    "protocol": "socks",
+    "tag": "out-tor",
+    "settings": {
+      "servers": [{
+        "address": "127.0.0.1",
+        "port": 9050
+      }]
+    }
+  },{
+    // Psiphon
+    "protocol": "socks",
+    "tag": "out-psiphon",
+    "settings": {
+      "servers": [{
+        "address": "127.0.0.1",
+        "port": 10050
+      }]
+    }
+  },{
+    // Special DNS protocol
+    "protocol": "dns",
+    "tag": "dns",
+    "settings": {
+      "network": "tcp",
+      "address": "8.8.8.8",
+      "port": 53
+    },
+    // Route it over some tag explicitly, as non-A/AAAA queries would
+    // be routed over regular connection (not over proxy) otherwise,
+    // and not even be processed with the rules.
+    "proxySettings": {"tag": "reentry-dns-out"}
+  },{
+    // Blackhole
+    "protocol": "blackhole",
+    "tag": "blackhole"
+  },{
+    // Re-entry loopback for DNS, used for balanced routing
+    "protocol": "loopback",
+    "tag": "reentry-dns-out",
+    "settings": {
+      "inboundTag": "reentry-dns-in"
+    }
+  }],
+
+  // Routing controls how traffic from inbounds are sent to outbounds.
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules":[
+      {
+        "type": "field",
+        "inboundTag": ["dns-in"],
+        "outboundTag": "dns"
+      },{
+        "type": "field",
+        "inboundTag": ["reentry-dns-in"],
+        "balancerTag": "balancer"
+      },{
+        "type": "field",
+        "domains": ["domain:onion"],
+        "outboundTag": "out-tor"
+      },{
+        "type": "field",
+        "network": "tcp",
+        "port": "53,80,443,465,587,993,995,8000,8001,8080",
+        "balancerTag": "balancer"
+        //"outboundTag": "out-tor"
+        //"outboundTag": "out-psiphon"
+      },{
+        "type": "field",
+        "network": "tcp",
+        "outboundTag": "out-tor"
+        //"outboundTag": "out-psiphon"
+      },{
+        "type": "field",
+        "network": "udp",
+        "outboundTag": "blackhole"
+      }
+    ],
+    "balancers":[
+      {
+        "tag": "balancer",
+        "selector": ["out-"],
+        //"selector": ["out-psiphon"],
+        //"selector": ["out-tor"],
+        "strategy": {
+          "type": "leastPing"
+        }
+      }
+    ]
+  },
+
+  // Dns settings for domain resolution.
+  "dns": {
+    "servers": [
+      "fakedns",
+      //"https://1.1.1.1/dns-query",
+      "tcp://8.8.8.8",
+      "localhost"
+    ]
+  },
+
+  // Policy controls some internal behavior of how V2Ray handles connections.
+  // It may be on connection level by user levels in 'levels', or global settings in 'system.'
+  "policy": {
+    // Connection policys by user levels
+    "levels": {
+      "0": {
+        "handshake": 15,
+        "connIdle": 300,
+        "uplinkOnly": 0,
+        "downlinkOnly": 0,
+        "bufferSize": 16
+      }
+    },
+    "system": {
+      "statsInboundUplink": false,
+      "statsInboundDownlink": false,
+      "statsOutboundUplink": false,
+      "statsOutboundDownlink": false
+    }
+  },
+
+  // Check connection over Tor and Psiphon and select the one with less latency
+  "observatory": {
+    "subjectSelector": ["out-"],
+    "probeURL": "https://connectivitycheck.gstatic.com/generate_204",
+    "probeInterval": "3m"
+  },
+
+  // You may add other entries to the configuration, but they will not be recognized by V2Ray.
+  "other": {}
+}

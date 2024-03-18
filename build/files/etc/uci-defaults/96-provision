@@ -1,0 +1,89 @@
+# Provisioning script
+#
+# On the first boot, it does the following:
+#
+# 1. It looks for .tar.gz archive in the end of the system disk on hardcoded offset 512*246335
+# 2. If offset 512*246335 contains "PROVISION" string, skip 512 bytes and unpack .tar.gz file
+#    to the /
+# 3. Read and parse /etc/config/provision (it is assumed to be present in provision archive)
+# 4. Execute all the UCI scripts from uci_directory variable in provision configuration file
+# 5. Force-enable or force-disable services mentioned in the configuration file
+
+function doprovision() {
+    # Parse provision configuration file
+    PROVISION_ID=
+    SERVICES_ENABLE=
+    SERVICES_DISABLE=
+
+    function config_cb() {
+        local type="$1"
+        local name="$2"
+
+        [ "$type" = "provision" ] && PROVISION_ID="$name"
+
+        if [ "$type" = "services" ];
+        then
+            option_cb() {
+                local option="$1"
+                local value="$2"
+                [ "$value" = "1" ] && SERVICES_ENABLE="$SERVICES_ENABLE $option"
+                [ "$value" = "0" ] && SERVICES_DISABLE="$SERVICES_DISABLE $option"
+            }
+        else {
+            option_cb() { return; }
+        }
+        fi
+    }
+    config_load provision
+    reset_cb
+
+    config_get_bool ENABLED "$PROVISION_ID" enable 0
+
+    if [ "$ENABLED" -ne "1" ]; then
+        exit 0
+    fi
+
+    # Change hostname only on first boot
+    config_get hostname "$PROVISION_ID" hostname
+    if [ "$hostname" ] && ! [ $(uci -q get system.@system[0].firstboot_done) ]; then
+        uci set system.@system[0].hostname="$hostname"
+        uci commit system
+        echo "$hostname" > /proc/sys/kernel/hostname
+    fi
+
+    config_get UCI_DIRECTORY "$PROVISION_ID" uci_directory
+    if [ "$UCI_DIRECTORY" ]; then
+        for script in $UCI_DIRECTORY/*; do
+            ( source "$script"; )
+        done
+    fi
+
+    for srvc in $SERVICES_ENABLE; do
+        /etc/init.d/$srvc enable
+    done
+
+    for srvc in $SERVICES_DISABLE; do
+        /etc/init.d/$srvc disable
+    done
+}
+
+# Unpack data only on first boot, not on firmware upgrade
+if ! [[ $(uci -q get system.@system[0].firstboot_done) ]]; then
+    DEVICE=$(mount | awk '/on \/boot/ {print substr($1, 0, length($1)-1);exit}')
+    if [ ! "$DEVICE" ]; then
+        echo "Can't get provision device!"
+        exit 1
+    fi
+
+    PROVISION=$(dd if=$DEVICE bs=512 count=1 skip=246335 2>/dev/null | xxd -ps -l 9)
+    if ! [ "$PROVISION" = "50524f564953494f4e" ]; then
+        echo "No provision data found!"
+        exit 0
+    fi
+        
+    dd if=$DEVICE bs=512 skip=246336 2>/dev/null | tar -C / -zxv || exit 1
+fi
+
+doprovision
+
+exit 0

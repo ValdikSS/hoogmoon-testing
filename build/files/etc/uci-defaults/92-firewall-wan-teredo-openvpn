@@ -1,0 +1,53 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Add OpenVPN and Miredo to 'wan' firewall zone
+# This disables any incoming connections and routing by default
+
+uci set network.teredo=interface
+uci set network.teredo.proto='none'
+uci set network.teredo.device='teredo'
+
+uci set network.tun0=interface
+uci set network.tun0.proto='none'
+uci set network.tun0.device='tun0'
+
+uci commit network
+
+# Find WAN zone
+for i in 0 1 2; do
+    if [ "$(uci -q get firewall.@zone[$i].name)" = "wan" ]; then
+        uci add_list firewall.@zone[$i].network='teredo'
+        uci add_list firewall.@zone[$i].network='tun0'
+        break
+    fi
+done
+
+
+# Add SSH and OpenVPN allowing rules
+# NOTE: these are not limited to 192.168.0.0/16 only!
+
+rule_name=$(uci add firewall rule) 
+uci batch << EOI
+set firewall.$rule_name.enabled='1'
+set firewall.$rule_name.target='ACCEPT'
+set firewall.$rule_name.src='wan'
+set firewall.$rule_name.proto='tcp'
+set firewall.$rule_name.dest_port='22'
+set firewall.$rule_name.name='Allow-SSH'
+EOI
+
+rule_name=$(uci add firewall rule) 
+uci batch << EOI
+set firewall.$rule_name.enabled='1'
+set firewall.$rule_name.target='ACCEPT'
+set firewall.$rule_name.src='wan'
+set firewall.$rule_name.proto='tcp udp'
+set firewall.$rule_name.dest_port='1194'
+set firewall.$rule_name.name='Allow-OpenVPN'
+EOI
+
+uci commit firewall
+
+exit 0

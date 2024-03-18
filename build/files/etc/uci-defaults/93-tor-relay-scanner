@@ -1,0 +1,20 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Enable Tor Relay Scanner
+
+uci set tor_relay_scanner.@tor_relay_scanner[0].enable='1'
+uci commit tor_relay_scanner
+
+touch /etc/tor/bridge.conf
+chmod 644 /etc/tor/bridge.conf
+
+# Add Tor Relay Scanner to the cron, run every hour in 27 minutes.
+#
+# We check 'status' and not 'running' here because 'running' returns if the service
+# is running right now and 'status' returns if the service was started at all
+
+echo '27 * * * * [ $(/etc/init.d/tor_relay_scanner status) = "running" ] && /etc/init.d/tor_relay_scanner reload' >> /etc/crontabs/root
+
+exit 0

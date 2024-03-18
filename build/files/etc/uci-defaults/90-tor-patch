@@ -1,0 +1,10 @@
+# Patch broken tor reload
+#
+# See  https://github.com/openwrt/packages/pull/20312
+
+sed -i 's#procd_send_signal /usr/sbin/tor#procd_send_signal tor#' /etc/init.d/tor
+
+# Add /etc/tor directory to keep.d file
+echo '/etc/tor/' >> /lib/upgrade/keep.d/tor
+
+exit 0

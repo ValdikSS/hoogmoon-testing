@@ -1,0 +1,23 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Apply Miredo server address configuration
+#
+# As of January 2023, all Teredo servers (even not listed in
+# official Miredo configuration file) are dead.
+# Only 'win10' Microsoft server is still working.
+# This server does not provide Teredo-to-real-IPv6 relay.
+
+# Disable all servers
+sed -i 's/^\(ServerAddress\)/#\1/g' /etc/miredo/miredo.conf
+
+# Delete win10.ipv6.microsoft.com
+sed -i '/ServerAddress win10.ipv6.microsoft.com/d' /etc/miredo/miredo.conf
+
+# Add win10.ipv6.microsoft.com
+echo 'ServerAddress win10.ipv6.microsoft.com' >> /etc/miredo/miredo.conf
+
+# NOTE: win1910.ipv6.microsoft.com also works and has a different IP address.
+
+exit 0

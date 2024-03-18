@@ -1,0 +1,84 @@
+name: Build OpenWrt Packages
+
+on:
+  - workflow_dispatch
+
+env:
+  SDK_GENERIC: "openwrt-sdk-22.03.6-x86-generic_gcc-11.2.0_musl.Linux-x86_64"
+  SDK_LEGACY:  "openwrt-sdk-22.03.6-x86-legacy_gcc-11.2.0_musl.Linux-x86_64"
+
+jobs:
+  openwrt_generic:
+    name: OpenWrt Packages (generic)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download SDK from cache
+        id: sdk
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.SDK_GENERIC }}.tar.xz
+          key: ${{ env.SDK_GENERIC }}.tar.xz
+
+      - name: Download build environment from cache
+        id: build_env
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.SDK_GENERIC }}
+          key: ${{ env.SDK_GENERIC }}-build
+
+      - name: Get variables
+        id: vars
+        run: |
+          echo "date=$(date '+%F-%H-%M')" >> $GITHUB_OUTPUT
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Run OpenWrt Packages build script
+        run: |
+          ./build/build_packages.sh generic
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: hoogmoon-x86-packages-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
+          path: ${{ env.SDK_GENERIC }}/bin/outpkgs/*
+
+
+  openwrt_legacy:
+    name: OpenWrt Packages (legacy)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download SDK from cache
+        id: sdk
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.SDK_LEGACY }}.tar.xz
+          key: ${{ env.SDK_LEGACY }}.tar.xz
+
+      - name: Download build environment from cache
+        id: build_env
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.SDK_LEGACY }}
+          key: ${{ env.SDK_LEGACY }}-build
+
+      - name: Get variables
+        id: vars
+        run: |
+          echo "date=$(date '+%F-%H-%M')" >> $GITHUB_OUTPUT
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Run OpenWrt Packages build script
+        run: |
+          ./build/build_packages.sh legacy
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: hoogmoon-viax86-packages-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
+          path: ${{ env.SDK_LEGACY }}/bin/outpkgs/*

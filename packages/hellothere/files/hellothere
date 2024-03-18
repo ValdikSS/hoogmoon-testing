@@ -1,0 +1,157 @@
+#!/bin/sh
+. /lib/functions.sh
+
+HOSTNAME=$(uci -q get system.@system[0].hostname)
+eval $(jsonfilter -i /etc/board.json -e 'MODEL=@.model.id')
+
+# Get WAN IP, which may be behind another NAT
+function myip_int {
+  ifstatus wan | jsonfilter -e '@["ipv4-address"][0].address'
+}
+
+# Get real WAN IP using Yandex service
+function myip_ext {
+  curl -s -f --max-time 15 https://ipv4-internet.yandex.net/api/v0/ip \
+    | awk -F '"' '{print $2}'
+}
+
+# Construct hello message with all the necessary connection information
+function construct_message {
+  for script in /usr/lib/hellothere/*.sh; do
+    ( source $script )
+  done
+
+  return 0
+}
+
+# Telegram bot sender function
+function telegram_send() {
+  local apikey="$1"
+  local chatid="$2"
+
+  for cmd in "curl" "proxychains curl"; do
+    $cmd --silent -o /dev/null --fail --max-time 15 \
+      "https://api.telegram.org/bot${apikey}/sendMessage" \
+      -d "chat_id=$chatid" -d "text=$(construct_message)" \
+    && break
+  done
+}
+
+# Read Telegram bot account data and call sending function
+function telegram() {
+  local account="$1"  
+
+  config_get apikey "$account" apikey
+  config_get chatid "$account" chatid
+
+  telegram_send "$apikey" "$chatid"
+}
+
+# Email sender function
+function email_send() {
+  local server="$1"
+  local tlsport="$2"
+  local username="$3"
+  local password="$4"
+  local subject="$5"
+  local from="$6"
+  local to="$7"
+
+  local headers="To: $to\n"
+  headers="${headers}Subject: $subject\n"
+  headers="${headers}MIME-Version: 1.0\n"
+  headers="${headers}Content-Type: text/plain; charset=UTF-8\n"
+  headers="${headers}Content-Transfer-Encoding: 8bit\n"
+
+  for cmd in "msmtp" "proxychains msmtp"; do
+    (echo -e "$headers" && echo "$(construct_message)") | \
+      \
+      $cmd --host="$server" --port="$tlsport" --timeout 15 --auth=on --tls=on \
+      --tls-starttls=off --set-from-header=on \
+      --user "$username" -f "$from" --password="echo $password" \
+      "$to" \
+    && break
+  done
+}
+
+function email() {
+  local account="$1"
+
+  config_get server "$1" server
+  config_get tlsport "$1" tlsport 465
+  config_get username "$1" username
+  config_get password "$1" password
+  config_get subject "$1" subject "Hello there!"
+  config_get from "$1" from "$username"
+  config_get to "$1" to
+
+  subject="$(eval echo $subject)"
+
+  email_send "$server" "$tlsport" "$username" "$password" "$subject" \
+    "$from" "$to"
+}
+
+# Generic sender function.
+# Executes real function using direct connection. If that fails,
+# the function is executed via proxychains (with special function
+# argument)
+function send() {
+  local function="$1"
+  shift
+
+  $function "$@"
+}
+
+function send_loop() {
+  local MAIL_ACCOUNTS=
+  local TELEGRAM_ACCOUNTS=
+  local CURRENT_ACCOUNTS=
+  local FUNCTION=
+  local ok=
+
+  config_load hellothere
+  config_foreach load_config_emails email
+  config_foreach load_config_telegrams telegram
+
+  config_get use_account config use_account 'any'
+  config_get priority config priority 'telegram email'
+
+  for i in $(seq 30); do
+
+    for FUNCTION in $priority; do
+      [ "$FUNCTION" = "telegram" ] && CURRENT_ACCOUNTS="$TELEGRAM_ACCOUNTS"
+      [ "$FUNCTION" = "email" ] && CURRENT_ACCOUNTS="$MAIL_ACCOUNTS"
+
+      for acct in $CURRENT_ACCOUNTS; do
+        config_get_bool acct_enabled "$acct" enable 0
+        [ "$acct_enabled" -ne 0 ] && send "$FUNCTION" "$acct" && ok=1
+        [ "$ok" ] && [ "$use_account" = "any" ] && exit 0
+      done
+
+    done
+
+    [ "$ok" ] && return
+    sleep 10
+
+  done
+}
+
+function load_config_emails() {
+  [ ! "$MAIL_ACCOUNTS" ] && MAIL_ACCOUNTS="$1" && return
+  MAIL_ACCOUNTS="$MAIL_ACCOUNTS $1"
+}
+
+function load_config_telegrams() {
+  [ ! "$TELEGRAM_ACCOUNTS" ] && TELEGRAM_ACCOUNTS="$1" && return
+  TELEGRAM_ACCOUNTS="$TELEGRAM_ACCOUNTS $1"
+}
+
+
+# Wait for 45 seconds since boot for everything to settle
+while awk -F '.' '$1 > 45 {exit 1}' /proc/uptime; do
+  sleep 1
+done
+
+send_loop
+
+exit 0

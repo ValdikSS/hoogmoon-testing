@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=96
+boot() {
+	[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+	uci set system.@system[0].firstboot_done='1'
+	uci commit system
+
+	# process user commands
+	[ -f /etc/rc.provision ] && {
+		sh /etc/rc.provision
+	}
+}

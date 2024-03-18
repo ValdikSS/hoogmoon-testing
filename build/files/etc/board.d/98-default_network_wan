@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Copyright (C) 2013-2015 OpenWrt.org
+#
+
+. /lib/functions/uci-defaults.sh
+
+board_config_update
+
+json_is_a network object && exit 0
+
+# Virtual machines expect to have WAN interface
+# if it is the only one.
+# By default, OpenWRT assumes LAN on the first
+# (and single) port as it is the router firmware.
+#
+# Make sure to tag the only interface as WAN, to
+# block any non-allowed incoming connections.
+
+ucidef_set_interface_wan 'eth0'
+ucidef_set_interface_lan 'eth1'
+
+board_config_flush
+
+exit 0

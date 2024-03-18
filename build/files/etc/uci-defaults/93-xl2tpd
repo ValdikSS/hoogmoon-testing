@@ -1,0 +1,9 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Add DNS server to xl2tpd options
+
+echo 'ms-dns 8.8.8.8' >> /etc/ppp/options.xl2tpd
+
+exit 0

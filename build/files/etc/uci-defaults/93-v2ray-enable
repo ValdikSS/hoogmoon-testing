@@ -1,0 +1,11 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Enable v2ray proxy
+
+uci set v2ray.enabled.enabled='1'
+uci delete v2ray.config.confdir
+uci commit v2ray
+
+exit 0

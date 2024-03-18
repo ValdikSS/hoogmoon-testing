@@ -1,0 +1,20 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Allow Avahi discovery on WAN interface
+
+rule_name=$(uci add firewall rule)
+uci batch << EOI
+set firewall.$rule_name.enabled='1'
+set firewall.$rule_name.target='ACCEPT'
+set firewall.$rule_name.src='wan'
+set firewall.$rule_name.src_ip='192.168.0.0/16'
+set firewall.$rule_name.proto='udp'
+set firewall.$rule_name.dest_port='5353'
+set firewall.$rule_name.name='Allow-Avahi-Input'
+EOI
+
+uci commit firewall
+
+exit 0

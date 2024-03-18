@@ -1,0 +1,41 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Add UDP 500, ESP and UDP 1701 to INPUT allow
+
+rule_name=$(uci add firewall rule)
+uci batch << EOI
+set firewall.$rule_name.enabled='1'
+set firewall.$rule_name.target='ACCEPT'
+set firewall.$rule_name.src='wan'
+set firewall.$rule_name.src_ip='192.168.0.0/16'
+set firewall.$rule_name.proto='udp'
+set firewall.$rule_name.dest_port='500'
+set firewall.$rule_name.name='Allow-ISAKMP-Input'
+EOI
+
+rule_name=$(uci add firewall rule)
+uci batch << EOI
+set firewall.$rule_name.enabled='1'
+set firewall.$rule_name.target='ACCEPT'
+set firewall.$rule_name.src='wan'
+set firewall.$rule_name.src_ip='192.168.0.0/16'
+set firewall.$rule_name.proto='udp'
+set firewall.$rule_name.dest_port='1701'
+set firewall.$rule_name.name='Allow-L2TP-Input'
+EOI
+
+rule_name=$(uci add firewall rule)
+uci batch << EOI
+set firewall.$rule_name.enabled='1'
+set firewall.$rule_name.target='ACCEPT'
+set firewall.$rule_name.src='wan'
+set firewall.$rule_name.src_ip='192.168.0.0/16'
+set firewall.$rule_name.proto='esp'
+set firewall.$rule_name.name='Allow-ESP-Input'
+EOI
+
+uci commit firewall
+
+exit 0

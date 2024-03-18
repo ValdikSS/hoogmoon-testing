@@ -1,0 +1,50 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+HOSTNAME=$(uci -q get system.@system[0].hostname)
+COUNTRY=$(uci -q get provision.@provision[0].country)
+USERNAME=$(uci -q get provision.@provision[0].autossh_username)
+[ ! "$USERNAME" ] && USERNAME="someuser"
+[ "$COUNTRY" == "TM" ] && DIRECT_ENABLE=0 || DIRECT_ENABLE=1
+
+# Remove default autossh configurations
+
+while uci -q delete autossh.@autossh[0]; do :; done;
+
+# Add ssh-j.com (direct)
+
+uci set autossh.sshj_direct=autossh
+uci set autossh.sshj_direct.enabled="$DIRECT_ENABLE"
+uci set autossh.sshj_direct.ssh="-W 256000 -o ExitOnForwardFailure=yes -K 45 -N -R $HOSTNAME:22:127.0.0.1:22 $USERNAME@ssh-j.com"
+uci set autossh.sshj_direct.gatetime='0'
+uci set autossh.sshj_direct.monitorport='0'
+# poll in this case works as a maximum timeout between reconnection attempts
+uci set autossh.sshj_direct.poll='120'
+
+# Add ssh-j.com (over Tor)
+
+uci set autossh.sshj_tor=autossh
+uci set autossh.sshj_tor.enabled='1'
+uci set autossh.sshj_tor.ssh="-W 256000 -o ExitOnForwardFailure=yes -K 45 -N -R $HOSTNAME:22:127.0.0.1:22 $USERNAME@ssh-j.com"
+uci set autossh.sshj_tor.dropbearproxy='ncat -w 15 --proxy 127.0.0.1:9050 --proxy-type socks5 sshjmpnoutfqotbj6r3acexiwoalgkth55y5kys7js3px2qqqrwuhqqd.onion 22'
+uci set autossh.sshj_tor.gatetime='0'
+uci set autossh.sshj_tor.monitorport='0'
+# poll in this case works as a maximum timeout between reconnection attempts
+uci set autossh.sshj_tor.poll='120'
+
+# Add ssh-j.com (over Psiphon)
+
+uci set autossh.sshj_psiphon=autossh
+uci set autossh.sshj_psiphon.enabled='1'
+uci set autossh.sshj_psiphon.ssh="-W 256000 -o ExitOnForwardFailure=yes -K 25 -N -R $HOSTNAME:22:127.0.0.1:22 $USERNAME@ssh-j.com"
+uci set autossh.sshj_psiphon.dropbearproxy='ncat -w 15 --proxy 127.0.0.1:10050 --proxy-type socks5 ssh-j.com 8000'
+uci set autossh.sshj_psiphon.gatetime='0'
+uci set autossh.sshj_psiphon.monitorport='0'
+# poll in this case works as a maximum timeout between reconnection attempts
+uci set autossh.sshj_psiphon.poll='120'
+
+
+uci commit autossh
+
+exit 0

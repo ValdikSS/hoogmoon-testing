@@ -1,0 +1,22 @@
+chain v2ray_lan_redirect {
+    udp dport 53 counter redirect to 5553 comment "v2ray udp dns"
+
+    ip daddr != {0.0.0.0/8, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10, 169.254.0.0/16, 224.0.0.0/4, 255.255.255.255/32} \
+      udp dport != 53 reject with icmpx type no-route comment "v2ray IPv4 udp external reject"
+
+    ip daddr != {0.0.0.0/8, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10, 169.254.0.0/16, 224.0.0.0/4, 255.255.255.255/32} \
+      meta l4proto tcp counter redirect to 5555 comment "v2ray IPv4 tcp"
+
+    ip6 daddr != {::ffff:0:0/96, fc00::/7, fe80::/10, ff00::/8} \
+      udp dport != 53 reject with icmpx type no-route comment "v2ray IPv6 udp external reject"
+
+    ip6 daddr != {::ffff:0:0/96, fc00::/7, fe80::/10, ff00::/8} \
+      meta l4proto tcp counter redirect to 5555 comment "v2ray IPv6 tcp"
+}
+
+chain v2ray_lan_snoop {
+    type nat hook prerouting priority dstnat+10;
+
+    iifname {"br-lan", "ppp0", "ppp1", "ppp2", "ppp3"} jump v2ray_lan_redirect comment "v2ray for LAN and PPP"
+    iifname {"eth0"} ipsec in ip saddr 192.168.0.0/16 jump v2ray_lan_redirect comment "v2ray for IPsec IKEv2"
+}

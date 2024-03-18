@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=50
+
+PROG=/usr/bin/psiphon
+
+start_instance() {
+  local section="$1"
+
+  config_get_bool enable "$section" enable
+  config_get config "$section" config
+  config_get serverlist "$section" serverlist
+  config_get datarootdirectory "$section" datarootdirectory "/var/lib/psiphon"
+  config_get listeninterface "$section" listeninterface
+  config_get tundevice "$section" tundevice
+  config_get tunbindinterface "$section" tunbindinterface ""
+
+  [ "$enable" = "0" ] && return 1
+  [ "$datarootdirectory" ] && [ ! -d "$datarootdirectory" ] && mkdir "$datarootdirectory"
+
+  procd_open_instance
+  procd_set_param command "$PROG"
+  [ "$config" ] && procd_append_param command -config "$config"
+  [ "$serverlist" ] && procd_append_param command -serverList "$serverlist"
+  [ "$datarootdirectory" ] && procd_append_param command -dataRootDirectory "$datarootdirectory"
+  [ "$listeninterface" ] && procd_append_param command -listenInterface "$listeninterface"
+  [ "$tundevice" ] && procd_append_param command -tunDevice "$tundevice"
+  [ "$tundevice" ] && procd_append_param command -tunBindInterface "$tunbindinterface"
+  procd_set_param respawn
+  [ "$config" ] && procd_set_param file "$config"
+  procd_set_param stdout 1 # forward stdout of the command to logd
+  procd_set_param stderr 1 # same for stderr
+  procd_close_instance
+}
+
+start_service() {
+  config_load psiphon
+  config_foreach start_instance psiphon
+}

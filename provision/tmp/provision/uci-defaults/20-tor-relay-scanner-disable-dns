@@ -1,0 +1,8 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+[ "$(uci -q get provision.@provision[0].country)" != "TM" ] && exit 0
+
+echo 0.0.0.0 onionoo.torproject.org >> /etc/hosts
+echo :: onionoo.torproject.org >> /etc/hosts

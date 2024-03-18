@@ -1,0 +1,90 @@
+name: Build OpenWrt
+
+on:
+  - workflow_dispatch
+
+env:
+  IMAGEBUILDER_LEGACY:  "openwrt-imagebuilder-22.03.6-x86-legacy.Linux-x86_64"
+  IMAGEBUILDER_GENERIC: "openwrt-imagebuilder-22.03.6-x86-generic.Linux-x86_64"
+  
+jobs:
+  openwrt_legacy:
+    name: OpenWrt Legacy (VIA)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download ImageBuilder from cache
+        id: imagebuilder
+        uses: actions/cache@v3
+        with:
+          path: build/${{ env.IMAGEBUILDER_LEGACY }}.tar.xz
+          key: ${{ env.IMAGEBUILDER_LEGACY }}.tar.xz
+
+      - name: Download packages from cache
+        id: packages
+        uses: actions/cache@v3
+        with:
+          path: build/${{ env.IMAGEBUILDER_LEGACY }}/dl
+          key: ${{ env.IMAGEBUILDER_LEGACY }}-dl
+          
+      - name: Get variables
+        id: vars
+        run: |
+          echo "date=$(date '+%F-%H-%M')" >> $GITHUB_OUTPUT
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Run OpenWrt build script
+        run: |
+          cd build
+          ./build.sh legacy
+          mv ${{ env.IMAGEBUILDER_LEGACY }}/bin/targets/x86/legacy/openwrt-22.03.6-x86-legacy-generic-squashfs-combined-efi.img.gz \
+          hoogmoon-viax86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: hoogmoon-viax86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
+          path: build/hoogmoon-viax86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
+
+
+  openwrt_generic:
+    name: OpenWrt Generic (Virtual Machine)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download ImageBuilder from cache
+        id: imagebuilder
+        uses: actions/cache@v3
+        with:
+          path: build/${{ env.IMAGEBUILDER_GENERIC }}.tar.xz
+          key: ${{ env.IMAGEBUILDER_GENERIC }}.tar.xz
+
+      - name: Download packages from cache
+        id: packages
+        uses: actions/cache@v3
+        with:
+          path: build/${{ env.IMAGEBUILDER_GENERIC }}/dl
+          key: ${{ env.IMAGEBUILDER_GENERIC }}-dl
+          
+      - name: Get variables
+        id: vars
+        run: |
+          echo "date=$(date '+%F-%H-%M')" >> $GITHUB_OUTPUT
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Run OpenWrt build script
+        run: |
+          cd build
+          ./build.sh generic
+          mv ${{ env.IMAGEBUILDER_GENERIC }}/bin/targets/x86/generic/openwrt-22.03.6-x86-generic-generic-squashfs-combined-efi.img.gz \
+          hoogmoon-x86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
+
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: hoogmoon-x86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
+          path: build/hoogmoon-x86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz

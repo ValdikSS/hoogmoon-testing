@@ -1,0 +1,9 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Change Avahi hostname
+
+sed -i 's/#host-name=foo/host-name=hoogmoon/' /etc/avahi/avahi-daemon.conf
+
+exit 0

@@ -1,0 +1,39 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+HOSTNAME=$(uci -q get system.@system[0].hostname)
+
+WIFI_NAME=$(uci -q get provision.@provision[0].wifi_name)
+[ ! "$WIFI_NAME" ] && WIFI_NAME="HOOGMOON-$HOSTNAME"
+
+WIFI_PASS=$(uci -q get provision.@provision[0].wifi_pass)
+[ ! "$WIFI_PASS" ] && WIFI_PASS="12345678"
+
+COUNTRY=$(uci -q get provision.@provision[0].country)
+[ ! "$COUNTRY" ] && COUNTRY="RU"
+
+# Configure ath9k-htc (Atheros AR9271) card
+
+uci set wireless.radio0=wifi-device
+uci set wireless.radio0.type=mac80211
+uci set wireless.radio0.path='pci0000:00/0000:00:10.4/usb1/1-3/1-3:1.0'
+uci set wireless.radio0.band=2g
+uci set wireless.radio0.cell_density=0
+uci set wireless.radio0.htmode=HT20
+uci set wireless.radio0.country="$COUNTRY"
+uci set wireless.radio0.channel=1
+uci set wireless.radio0.disabled=0
+
+uci set wireless.default_radio0=wifi-iface
+uci set wireless.default_radio0.device=radio0
+uci set wireless.default_radio0.network=lan
+uci set wireless.default_radio0.mode=ap
+uci set wireless.default_radio0.ssid="$WIFI_NAME"
+uci set wireless.default_radio0.encryption='psk2+ccmp'
+uci set wireless.default_radio0.key="$WIFI_PASS"
+uci set wireless.default_radio0.ieee80211w=1
+
+uci commit wireless
+
+exit 0

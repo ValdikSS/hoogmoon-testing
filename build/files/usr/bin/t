@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Single-character shortcut to run tmux
+
+exec tmux -u new -A

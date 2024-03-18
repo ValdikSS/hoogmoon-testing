@@ -1,0 +1,17 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Configure pptpd
+
+uci set pptpd.pptpd.enabled='1'
+uci set pptpd.pptpd.localip='192.168.254.200'
+uci set pptpd.pptpd.remoteip='192.168.254.220-230'
+uci set pptpd.pptpd.logwtmp='0'
+uci set pptpd.pptpd.mppe='no40 no56 stateless'
+
+uci commit pptpd
+
+echo 'ms-dns 8.8.8.8' >> /etc/ppp/options.pptpd
+
+exit 0

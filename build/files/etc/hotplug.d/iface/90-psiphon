@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Add default route in "LAN Redirect" table 100 for UDP traffic over Psiphon.
+# This is for psiphon tun interface, not used by default.
+#
+# The script applies only if v2ray_redirect is enabled and active.
+
+EXPECTED_INTF="psiphon"
+
+[ "$ACTION" = "ifup" ] && [ "$INTERFACE" = "$EXPECTED_INTF" ] || exit 0
+/etc/init.d/v2ray_redirect status 1>/dev/null || exit 0
+
+logger -t network "Adding default route over Psiphon in table 100 (LAN redirect)"
+/sbin/ip route add default dev "$INTERFACE" table 100
+/sbin/ip -6 route add default dev "$INTERFACE" table 100
+
+exit 0

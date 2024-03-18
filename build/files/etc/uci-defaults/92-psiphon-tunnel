@@ -1,0 +1,29 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Add "psiphon" interface to LAN zone.
+# Useful only if Psiphon is configured as tun interface.
+# Not used by default.
+#
+# Psiphon's tun interface is useful for UDP traffic (Socks implementation doesn't support UDP),
+# however it is rather slow, incompatible with v2ray's fake DNS, and force browsers to prefer
+# using QUIC, which slows down internet surfing.
+
+uci set network.psiphon=interface
+uci set network.psiphon.device='psiphon'
+uci set network.psiphon.proto='none'
+
+uci commit network
+
+# Find LAN zone
+for i in 0 1 2; do
+    if [ "$(uci -q get firewall.@zone[$i].name)" = "lan" ]; then
+        uci add_list firewall.@zone[$i].network='psiphon'
+        break
+    fi
+done
+
+uci commit firewall
+
+exit 0

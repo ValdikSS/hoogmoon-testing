@@ -1,0 +1,34 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+### Configure SSH Hidden Service
+
+cat > /etc/tor/hidden-ssh.conf <<EOF
+HiddenServiceDir /etc/tor/hidden-ssh/
+HiddenServicePort 22 127.0.0.1:22
+EOF
+
+# Create SSH Hidden Service directory
+
+mkdir /etc/tor/hidden-ssh/
+chown tor: /etc/tor/hidden-ssh/
+chmod 700 /etc/tor/hidden-ssh/
+chmod 644 /etc/tor/torrc /etc/tor/*.conf
+
+# Add Tor tail_include with SSH hidden service
+
+uci add_list tor.conf.tail_include='/etc/tor/hidden-ssh.conf'
+
+
+# Configure Tor Bridge template
+
+echo > /etc/tor/bridge.conf
+
+# Add Tor tail_include with Bridge
+
+uci add_list tor.conf.tail_include='/etc/tor/bridge.conf'
+
+uci commit tor
+
+exit 0

@@ -1,0 +1,25 @@
+# Miredo client script adds default route over Teredo network,
+# which works fine with glibc since it follows gai.conf(5) configuration,
+# sets low priority of Teredo 2001:: address and uses IPv4 if this is
+# the only IPv6 address, even with default route.
+#
+# However, OpenWRT's musl doesn't seem to follow the same rules,
+# and adding default route over Teredo does exactly that.
+# Microsoft server doesn't have Teredo-to-real-IPv6 relay,
+# that's why we're ending in broken IPv6 connectivity,
+# which is an issue for many programs, including opkg.
+#
+# See:
+# https://github.com/libuv/libuv/issues/2225
+# https://inbox.vuxu.org/musl/20200730160012.GT6949@brightrain.aerifal.cx/
+# https://forum.openwrt.org/t/howto-make-openwrt-rfc6724-compliant/96555
+#
+# Patch out default route in the client script.
+#
+
+sed -i 's/\(^[^#].*"$IP" -6 route add default dev\)/# \1/' /etc/miredo/client-hook
+
+# Add keep.d file to preserve configuration
+echo '/etc/miredo/' > /lib/upgrade/keep.d/miredo
+
+exit 0

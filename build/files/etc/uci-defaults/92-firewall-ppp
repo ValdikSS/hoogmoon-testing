@@ -1,0 +1,43 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Add ppp* to 'lan' firewall zone
+# This enables NAT for L2TP and PPTP
+# NOTE: We can't add 'ppp+' or 'ppp*' due to nftables bug in 23.03
+#
+# https://bugzilla.netfilter.org/show_bug.cgi?id=1253
+# http://git.netfilter.org/nftables/commit/?id=4788869a3346b5b3f1f6a3cdb12fdf79da961ef9
+
+uci set network.ppp0=interface
+uci set network.ppp0.proto='none'
+uci set network.ppp0.device='ppp0'
+
+uci set network.ppp1=interface
+uci set network.ppp1.proto='none'
+uci set network.ppp1.device='ppp1'
+
+uci set network.ppp2=interface
+uci set network.ppp2.proto='none'
+uci set network.ppp2.device='ppp2'
+
+uci set network.ppp3=interface
+uci set network.ppp3.proto='none'
+uci set network.ppp3.device='ppp3'
+
+uci commit network
+
+# Find LAN zone
+for i in 0 1 2; do
+    if [ "$(uci -q get firewall.@zone[$i].name)" = "lan" ]; then
+        uci add_list firewall.@zone[$i].network='ppp0'
+        uci add_list firewall.@zone[$i].network='ppp1'
+        uci add_list firewall.@zone[$i].network='ppp2'
+        uci add_list firewall.@zone[$i].network='ppp3'
+        break
+    fi
+done
+
+uci commit firewall
+
+exit 0

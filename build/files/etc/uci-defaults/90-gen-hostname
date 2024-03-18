@@ -1,0 +1,12 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Generate random hostname
+
+HOSTNAME=$(dd if=/dev/urandom bs=4 count=1 2>/dev/null | hexdump -e '"%08x\n"')
+uci set system.@system[0].hostname="$HOSTNAME"
+uci commit system
+echo "$HOSTNAME" > /proc/sys/kernel/hostname
+
+exit 0

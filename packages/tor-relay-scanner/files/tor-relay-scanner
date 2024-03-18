@@ -1,0 +1,14 @@
+#!/bin/sh
+TOR_RELOAD=
+
+[ "$1" = "tor_reload" ] && TOR_RELOAD=1 && shift
+
+for i in $(seq 5); do
+    if ! tor-relay-scanner.pyz "$@"; then
+        sleep 30
+        continue
+    fi
+    break
+done
+
+[ "$TOR_RELOAD" ] && /etc/init.d/tor running && /etc/init.d/tor reload

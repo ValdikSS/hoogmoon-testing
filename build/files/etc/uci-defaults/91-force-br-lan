@@ -1,0 +1,13 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Force br-lan bridge interface even if there's no eth1 ethernet
+# interface, just to make sure that it would work with
+# wi-fi adapter properly
+
+#uci set network.@device[0].bridge_empty='1'
+
+#uci commit network
+
+exit 0

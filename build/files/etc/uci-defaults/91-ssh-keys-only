@@ -1,0 +1,12 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Disable SSH login using password (accept only keys)
+
+uci set dropbear.@dropbear[0].PasswordAuth="0"
+uci set dropbear.@dropbear[0].RootPasswordAuth="0"
+
+uci commit dropbear
+
+exit 0

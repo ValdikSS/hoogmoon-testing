@@ -1,0 +1,25 @@
+From 110f451ad3c0a621937139cee527735b71e57a1f Mon Sep 17 00:00:00 2001
+From: ValdikSS <iam@valdikss.org.ru>
+Date: Wed, 22 Feb 2023 18:45:50 +0300
+Subject: [PATCH] fake_hostname .com to .org
+
+---
+ src/lib/tls/tortls_openssl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/lib/tls/tortls_openssl.c b/src/lib/tls/tortls_openssl.c
+index 4895100..d00383a 100644
+--- a/src/lib/tls/tortls_openssl.c
++++ b/src/lib/tls/tortls_openssl.c
+@@ -1139,7 +1139,7 @@ tor_tls_new(tor_socket_t sock, int isServer)
+ #ifdef SSL_set_tlsext_host_name
+   /* Browsers use the TLS hostname extension, so we should too. */
+   if (!isServer) {
+-    char *fake_hostname = crypto_random_hostname(4,25, "www.",".com");
++    char *fake_hostname = crypto_random_hostname(4,25, "www.",".org");
+     SSL_set_tlsext_host_name(result->ssl, fake_hostname);
+     tor_free(fake_hostname);
+   }
+-- 
+2.39.2
+

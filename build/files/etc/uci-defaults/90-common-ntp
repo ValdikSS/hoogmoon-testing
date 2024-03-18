@@ -1,0 +1,14 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Set the most common NTP servers
+
+uci delete system.ntp.server
+uci add_list system.ntp.server='time.windows.com'
+uci add_list system.ntp.server='time.apple.com'
+uci add_list system.ntp.server='time.google.com'
+uci add_list system.ntp.server='0.android.pool.ntp.org'
+uci commit system
+
+exit 0

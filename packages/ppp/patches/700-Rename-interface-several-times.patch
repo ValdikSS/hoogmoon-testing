@@ -1,0 +1,39 @@
+From e89f774c04ddb300956e07239c9d5877cbaea154 Mon Sep 17 00:00:00 2001
+From: ValdikSS <iam@valdikss.org.ru>
+Date: Fri, 30 Jun 2023 04:09:56 +0300
+Subject: [PATCH] Rename interface several times
+
+---
+ pppd/sys-linux.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/pppd/sys-linux.c b/pppd/sys-linux.c
+index 85033d9..1979293 100644
+--- a/pppd/sys-linux.c
++++ b/pppd/sys-linux.c
+@@ -642,7 +642,7 @@ void generic_disestablish_ppp(int dev_fd)
+  */
+ static int make_ppp_unit(void)
+ {
+-	int x, flags;
++	int i, x, flags;
+ 
+ 	if (ppp_dev_fd >= 0) {
+ 		dbglog("in make_ppp_unit, already had /dev/ppp open?");
+@@ -673,7 +673,12 @@ static int make_ppp_unit(void)
+ 		slprintf(t, sizeof(t), "%s%d", PPP_DRV_NAME, ifunit);
+ 		strlcpy(ifr.ifr_name, t, IF_NAMESIZE);
+ 		strlcpy(ifr.ifr_newname, req_ifname, IF_NAMESIZE);
+-		x = ioctl(sock_fd, SIOCSIFNAME, &ifr);
++		for (i = 0; i < 10; i++) {
++			x = ioctl(sock_fd, SIOCSIFNAME, &ifr);
++			if (x >= 0)
++				break
++			usleep(50000); // 0.05 seconds
++		}
+ 		if (x < 0)
+ 		    error("Couldn't rename interface %s to %s: %m", t, req_ifname);
+ 		else
+-- 
+2.41.0
+

@@ -1,0 +1,26 @@
+config provision
+	option enable '1'
+	option version '1'
+	option country 'RU' # Could be used for UCI auto-configuration of various services
+	# option hostname 'static-hostname-here'
+	option password '12345678' # System password, for local login
+	option autossh_username 'your-ssh-name-here' # Username for SSH-J.com
+	option wifi_name 'Hotspot-0123'
+	option wifi_pass '12345678'
+	option uci_directory '/tmp/provision/uci-defaults'
+
+config services
+	#option hellothere '0'
+
+	option miredo '0'
+	#option tor '1'
+	#option tor_relay_scanner '1'
+	#option psiphon '1'
+
+	#option autossh '0'
+
+	#option pptpd '0'
+	#option xl2tpd '0'
+	#option swanctl '0'
+	#option v2ray '0'
+	#option v2ray_redirect '0'

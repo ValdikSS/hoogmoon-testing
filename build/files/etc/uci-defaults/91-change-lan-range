@@ -1,0 +1,11 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Change LAN IP range to prevent collision with common routers
+
+uci set network.lan.ipaddr='192.168.41.1'
+
+uci commit network
+
+exit 0

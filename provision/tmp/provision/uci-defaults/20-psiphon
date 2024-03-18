@@ -1,0 +1,15 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+if [ "$(uci -q get provision.@provision[0].country)" == "TM" ]; then
+    uci set psiphon.regular.enable=0
+    uci set psiphon.turkmenistan.enable=1
+fi
+
+if [ "$(uci -q get provision.@provision[0].country)" == "RU" ]; then
+    uci set psiphon.regular.enable=0
+    uci set psiphon.russia.enable=1
+fi
+
+uci commit psiphon

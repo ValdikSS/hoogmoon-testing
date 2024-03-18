@@ -1,0 +1,110 @@
+From a50252bf191d42aa000d67849d3c9bb55f91c6cd Mon Sep 17 00:00:00 2001
+From: ValdikSS <iam@valdikss.org.ru>
+Date: Mon, 23 Jan 2023 02:08:36 +0300
+Subject: [PATCH 2/2] ciphershuffle
+
+---
+ src/lib/tls/tortls_openssl.c | 69 +++++++++++++++++++++++++++++++-----
+ 1 file changed, 60 insertions(+), 9 deletions(-)
+
+diff --git a/src/lib/tls/tortls_openssl.c b/src/lib/tls/tortls_openssl.c
+index 43d8c99..4895100 100644
+--- a/src/lib/tls/tortls_openssl.c
++++ b/src/lib/tls/tortls_openssl.c
+@@ -483,15 +483,13 @@ static const char UNRESTRICTED_SERVER_CIPHER_LIST[] =
+ #define XCIPHER(id, name)
+ /** List of ciphers that clients should advertise, omitting items that
+  * our OpenSSL doesn't know about. */
+-static const char CLIENT_CIPHER_LIST[] =
++static char CLIENT_CIPHER_LIST[] =
+ #ifndef COCCI
+ #include "lib/tls/ciphers.inc"
+ #endif
+-  /* Tell it not to use SSLv2 ciphers, so that it can select an SSLv3 version
+-   * of any cipher we say. */
+-  "!SSLv2"
++  ""
+   ;
+-char CLIENT_CIPHER_LIST_TLSv13[] =
++static char CLIENT_CIPHER_LIST_TLSv13[] =
+ #ifndef COCCI
+ #include "lib/tls/ciphers_v13.inc"
+ #endif
+@@ -1063,6 +1061,62 @@ tor_tls_setup_session_secret_cb(tor_tls_t *tls)
+   SSL_set_session_secret_cb(tls->ssl, tor_tls_session_secret_cb, NULL);
+ }
+ 
++static void
++tor_tls_shuffle_ciphers()
++{
++  static int already_shuffled = 0;
++  int indices[50] = {0};
++  int index_cnt = 0;
++  char new[sizeof(CLIENT_CIPHER_LIST)] = {0};
++  int random_start = 0;
++
++  if (already_shuffled) {
++    return;
++  }
++  already_shuffled = 1;
++
++  // remove colon at the end
++  CLIENT_CIPHER_LIST[strlen(CLIENT_CIPHER_LIST) - 1] = '\0';
++
++  for (int i=0; i<sizeof(CLIENT_CIPHER_LIST); i++) {
++    if (CLIENT_CIPHER_LIST[i] == ':') {
++      if (index_cnt >= 49) {
++        break;
++      }
++      indices[index_cnt] = i;
++      index_cnt++;
++    }
++  }
++
++  random_start = crypto_rand_int(index_cnt);
++  strcat(new, CLIENT_CIPHER_LIST + indices[random_start] + 1);
++  strcat(new, ":");
++  strncat(new, CLIENT_CIPHER_LIST, indices[random_start]);
++  strcpy(CLIENT_CIPHER_LIST, new);
++
++  index_cnt = 0;
++
++  // remove colon at the end
++  CLIENT_CIPHER_LIST_TLSv13[strlen(CLIENT_CIPHER_LIST_TLSv13) - 1] = '\0';
++
++  for (int i=0; i<sizeof(CLIENT_CIPHER_LIST_TLSv13); i++) {
++    if (CLIENT_CIPHER_LIST_TLSv13[i] == ':') {
++      if (index_cnt >= 49) {
++        break;
++      }
++      indices[index_cnt] = i;
++      index_cnt++;
++    }
++  }
++
++  random_start = crypto_rand_int(index_cnt);
++  memset(new, '\0', sizeof(CLIENT_CIPHER_LIST));
++  strcat(new, CLIENT_CIPHER_LIST_TLSv13 + indices[random_start] + 1);
++  strcat(new, ":");
++  strncat(new, CLIENT_CIPHER_LIST_TLSv13, indices[random_start]);
++  strcpy(CLIENT_CIPHER_LIST_TLSv13, new);
++}
++
+ /** Create a new TLS object from a file descriptor, and a flag to
+  * determine whether it is functioning as a server.
+  */
+@@ -1098,10 +1152,7 @@ tor_tls_new(tor_socket_t sock, int isServer)
+   }
+ #endif /* defined(SSL_CTRL_SET_MAX_PROTO_VERSION) */
+ 
+-  size_t TLSv13len = strlen(CLIENT_CIPHER_LIST_TLSv13);
+-  if (TLSv13len && CLIENT_CIPHER_LIST_TLSv13[TLSv13len - 1] == ':') {
+-    CLIENT_CIPHER_LIST_TLSv13[TLSv13len - 1] = '\0';
+-  }
++  tor_tls_shuffle_ciphers();
+   if (!SSL_set_cipher_list(result->ssl,
+                      isServer ? SERVER_CIPHER_LIST : CLIENT_CIPHER_LIST)
+       || (!isServer && !SSL_set_ciphersuites(result->ssl,
+-- 
+2.39.1
+

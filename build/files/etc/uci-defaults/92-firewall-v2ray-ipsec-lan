@@ -1,0 +1,27 @@
+#
+# Check if this is not the very first boot but a firmware upgrade
+[[ $(uci -q get system.@system[0].firstboot_done) ]] && exit 0
+
+# Allow IPsec-encapsulated traffic on WAN interface
+#
+# This is a hack to make IPsec IKEv2 tunnel work as if it is a LAN interface.
+# IPsec does not create additional interface, but instead all the packets
+# are coming encapsulated from the virtual IP address from the same (WAN)
+# interface after the connection.
+# That's why apply firewall rules for incoming IPsec-encapsulated packets
+# from WAN as if it is LAN.
+#
+# There are several ways to make it properly, such as XFRM network
+# interface, but this version of OpenWrt includes slightly outdated
+# strongSwan version which does not configure it all automatically.
+# Don't bother for now. It works.
+
+uci set firewall.ipsec_wan_lan=include
+uci set firewall.ipsec_wan_lan.type='nftables'
+uci set firewall.ipsec_wan_lan.path='/etc/v2ray/wan-allow-ipsec.nft'
+uci set firewall.ipsec_wan_lan.position='table-pre'
+uci set firewall.ipsec_wan_lan.enabled='1'
+
+uci commit firewall
+
+exit 0

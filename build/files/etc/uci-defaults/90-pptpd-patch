@@ -1,0 +1,10 @@
+# Remove chap-secrets resymlinking
+sed -i '/ln -sfn $CHAP_SECRETS/d' /etc/init.d/pptpd
+# Remove adding new username and password to chap-secrets,
+# we can handle it outselves
+sed -i '/echo "$username pptp-server/d' /etc/init.d/pptpd
+
+uci delete pptpd.@login[0]
+uci commit pptpd
+
+exit 0

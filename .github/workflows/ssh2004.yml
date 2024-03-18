@@ -1,0 +1,22 @@
+name: SSH Access (Ubuntu 20.04)
+
+on:
+  - workflow_dispatch
+
+jobs:
+  ssh:
+    name: Give SSH access
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Run SSH
+        run: |
+          mkdir ~/.ssh
+          echo 'ssh-j.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIiyFQuTwegicQ+8w7dLA7A+4JMZkCk8TLWrKPklWcRt' > ~/.ssh/known_hosts
+          echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBOCu8JpEBHDcrhcMpyE16xzk7/D8QRDGqEDVEnAqR3WHOUAEsvgTxz41/oqoDd8OAAQkl971pkRgGYSeK6D0dc= valdikss' | sudo tee /root/.ssh/authorized_keys
+          echo 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBOCu8JpEBHDcrhcMpyE16xzk7/D8QRDGqEDVEnAqR3WHOUAEsvgTxz41/oqoDd8OAAQkl971pkRgGYSeK6D0dc= valdikss' | tee ~/.ssh/authorized_keys
+          ssh -o ExitOnForwardFailure=yes -o ServerAliveInterval=60 -NR github:22:localhost:22 valdikss@ssh-j.com || true

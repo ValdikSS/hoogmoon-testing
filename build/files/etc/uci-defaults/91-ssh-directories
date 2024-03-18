@@ -1,0 +1,13 @@
+# Fix dropbear known_hosts with autossh
+#
+# OpenWrt has a bug where it sets HOME=/ when
+# running from init.d script.
+#
+# See https://forum.openwrt.org/t/why-i-cant-run-ssh-tunnel-on-startup/162972
+
+mkdir /.ssh
+mkdir /root/.ssh
+ln -s /etc/dropbear/known_hosts /.ssh/known_hosts
+ln -s /etc/dropbear/known_hosts /root/.ssh/known_hosts
+
+exit 0
