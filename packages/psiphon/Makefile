@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=psiphon
-PKG_SOURCE_DATE:=2024-01-30
-PKG_SOURCE_VERSION:=f406d7f784920601d18869129ca26a328b57b987
+PKG_SOURCE_DATE:=2024-04-30
+PKG_SOURCE_VERSION:=a77d3ca70bafcf6bcf060ea7337a7dee01fccbdc
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/Psiphon-Labs/psiphon-tunnel-core.git
