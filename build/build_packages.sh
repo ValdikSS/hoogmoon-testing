@@ -22,7 +22,6 @@ PACKAGES="
     curl
     openvpn
     lft
-    ppp
 "
 
 # Modifications to .config file to make
