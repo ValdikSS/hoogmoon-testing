@@ -37,6 +37,27 @@ function telegram_send() {
   done
 }
 
+# Read Slack account data and call sending function
+function slack() {
+  local account="$1"
+
+  config_get webhook "$account" webhook
+
+  slack_send "$webhook"
+}
+
+# Slack sender function
+function slack_send() {
+  local webhook="$1"
+
+  for cmd in "curl" "proxychains curl"; do
+    $cmd --silent -o /dev/null --fail --max-time 15 -X POST -H "Content-type: application/json" \
+      "${webhook}" \
+      --data "{\"text\": \"$(construct_message)\"}" \
+    && break
+  done
+}
+
 # Read Telegram bot account data and call sending function
 function telegram() {
   local account="$1"  
@@ -112,13 +133,15 @@ function send_loop() {
   config_load hellothere
   config_foreach load_config_emails email
   config_foreach load_config_telegrams telegram
+  config_foreach load_config_slacks slack
 
   config_get use_account config use_account 'any'
-  config_get priority config priority 'telegram email'
+  config_get priority config priority 'slack telegram email'
 
   for i in $(seq 30); do
 
     for FUNCTION in $priority; do
+      [ "$FUNCTION" = "slack" ] && CURRENT_ACCOUNTS="$SLACK_ACCOUNTS"
       [ "$FUNCTION" = "telegram" ] && CURRENT_ACCOUNTS="$TELEGRAM_ACCOUNTS"
       [ "$FUNCTION" = "email" ] && CURRENT_ACCOUNTS="$MAIL_ACCOUNTS"
 
@@ -139,6 +162,11 @@ function send_loop() {
 function load_config_emails() {
   [ ! "$MAIL_ACCOUNTS" ] && MAIL_ACCOUNTS="$1" && return
   MAIL_ACCOUNTS="$MAIL_ACCOUNTS $1"
+}
+
+function load_config_slacks() {
+  [ ! "$SLACK_ACCOUNTS" ] && SLACK_ACCOUNTS="$1" && return
+  SLACK_ACCOUNTS="$SLACK_ACCOUNTS $1"
 }
 
 function load_config_telegrams() {
