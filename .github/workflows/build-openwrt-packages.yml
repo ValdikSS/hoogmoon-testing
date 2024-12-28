@@ -40,7 +40,7 @@ jobs:
           ./build/build_packages.sh generic
 
       - name: Upload packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hoogmoon-x86-packages-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
           path: ${{ env.SDK_GENERIC }}/bin/outpkgs/*
@@ -78,7 +78,7 @@ jobs:
           ./build/build_packages.sh legacy
 
       - name: Upload packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hoogmoon-viax86-packages-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
           path: ${{ env.SDK_LEGACY }}/bin/outpkgs/*

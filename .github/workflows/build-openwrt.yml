@@ -43,7 +43,7 @@ jobs:
           hoogmoon-viax86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
 
       - name: Upload build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hoogmoon-viax86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
           path: build/hoogmoon-viax86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
@@ -84,7 +84,7 @@ jobs:
           hoogmoon-x86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
 
       - name: Upload build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hoogmoon-x86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
           path: build/hoogmoon-x86-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}.img.gz
