@@ -44,11 +44,11 @@ OUT_ADDITIONAL_PACKAGES="
 #ssh -o ExitOnForwardFailure=yes -o ServerAliveInterval=60 -NR github:22:localhost:22 valdikss@ssh-j.com || true
 
 if [[ "$1" == "generic" ]]; then
-    SDK_URL="https://downloads.openwrt.org/releases/22.03.6/targets/x86/generic/openwrt-sdk-22.03.6-x86-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
-    SDK_SHA1SUM="4456c4a5c79ecbcaacd8b6fd2fcb519e1bd05896"
+    SDK_URL="https://downloads.openwrt.org/releases/22.03.7/targets/x86/generic/openwrt-sdk-22.03.7-x86-generic_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+    SDK_SHA1SUM="a3acc72059f911c2e0fd632c519840aef236a55e"
 elif [[ "$1" == "legacy" ]]; then
-    SDK_URL="https://downloads.openwrt.org/releases/22.03.6/targets/x86/legacy/openwrt-sdk-22.03.6-x86-legacy_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
-    SDK_SHA1SUM="33b762e4bb664e78a22a99d7fd7ef4590f31757b"
+    SDK_URL="https://downloads.openwrt.org/releases/22.03.7/targets/x86/legacy/openwrt-sdk-22.03.7-x86-legacy_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+    SDK_SHA1SUM="e387be15293557a284bd83f864dbb3ac62fb8467"
 else
     echo "<$0> <generic/legacy>"
     exit 1

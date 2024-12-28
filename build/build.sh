@@ -11,11 +11,11 @@
 # ---------------------------
 
 if [[ "$1" == "generic" ]]; then
-    IMAGE_URL="https://downloads.openwrt.org/releases/22.03.6/targets/x86/generic/openwrt-imagebuilder-22.03.6-x86-generic.Linux-x86_64.tar.xz"
-    IMAGE_SHA1SUM="a16b0cccb812735027372f3b243ec6bb835bcbee"
+    IMAGE_URL="https://downloads.openwrt.org/releases/22.03.7/targets/x86/generic/openwrt-imagebuilder-22.03.7-x86-generic.Linux-x86_64.tar.xz"
+    IMAGE_SHA1SUM="e387be15293557a284bd83f864dbb3ac62fb8467"
 elif [[ "$1" == "legacy" ]]; then
-    IMAGE_URL="https://downloads.openwrt.org/releases/22.03.6/targets/x86/legacy/openwrt-imagebuilder-22.03.6-x86-legacy.Linux-x86_64.tar.xz"
-    IMAGE_SHA1SUM="435e9a881cc6dec860ff0826b0c6ee721886b3d4"
+    IMAGE_URL="https://downloads.openwrt.org/releases/22.03.7/targets/x86/legacy/openwrt-imagebuilder-22.03.7-x86-legacy.Linux-x86_64.tar.xz"
+    IMAGE_SHA1SUM="c1e01b7d1468b4a293219d9eef59ebea67b81ac1"
 else
     echo "<$0> <generic/legacy>"
     exit 1
