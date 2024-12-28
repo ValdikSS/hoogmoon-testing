@@ -12,7 +12,7 @@
 
 if [[ "$1" == "generic" ]]; then
     IMAGE_URL="https://downloads.openwrt.org/releases/22.03.7/targets/x86/generic/openwrt-imagebuilder-22.03.7-x86-generic.Linux-x86_64.tar.xz"
-    IMAGE_SHA1SUM="e387be15293557a284bd83f864dbb3ac62fb8467"
+    IMAGE_SHA1SUM="81ec6ba20395c3cf864a431bb75179e9d8e1776c"
 elif [[ "$1" == "legacy" ]]; then
     IMAGE_URL="https://downloads.openwrt.org/releases/22.03.7/targets/x86/legacy/openwrt-imagebuilder-22.03.7-x86-legacy.Linux-x86_64.tar.xz"
     IMAGE_SHA1SUM="c1e01b7d1468b4a293219d9eef59ebea67b81ac1"
