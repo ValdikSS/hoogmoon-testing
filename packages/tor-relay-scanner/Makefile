@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
  
 PKG_NAME:=tor-relay-scanner
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=tor-relay-scanner-$(PKG_VERSION).pyz
 PKG_SOURCE_URL:=https://github.com/ValdikSS/tor-relay-scanner/releases/download/$(PKG_VERSION)
-PKG_HASH:=29d15ed4328004a0f10de3e631256755ef05557fbe8aa79042f479e70a00ca2a
+PKG_HASH:=16999860da76143a81d13c2b7eca01487524d3419162e3213a6ebdb516329ce1
 
 include $(INCLUDE_DIR)/package.mk
 
